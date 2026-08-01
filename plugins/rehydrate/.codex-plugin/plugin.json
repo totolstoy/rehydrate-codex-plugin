@@ -1,0 +1,36 @@
+{
+  "name": "rehydrate",
+  "version": "0.1.0",
+  "description": "Restores task continuity after context compaction and across referential follow-up requests.",
+  "author": {
+    "name": "totolstoy",
+    "url": "https://github.com/totolstoy"
+  },
+  "homepage": "https://github.com/totolstoy/rehydrate-codex-plugin",
+  "repository": "https://github.com/totolstoy/rehydrate-codex-plugin",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "context-compaction",
+    "session-continuity",
+    "rehydration"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Rehydrate",
+    "shortDescription": "Keep Codex grounded in the current session.",
+    "longDescription": "Rehydrate restores the active task state after context compaction and selectively consults the persisted session record when later requests depend on earlier turns.",
+    "developerName": "totolstoy",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/totolstoy/rehydrate-codex-plugin",
+    "privacyPolicyURL": "https://github.com/totolstoy/rehydrate-codex-plugin/blob/main/PRIVACY.md",
+    "capabilities": [
+      "Context recovery",
+      "Session continuity"
+    ],
+    "defaultPrompt": [
+      "Use $rehydrate to recover the active task state for this session.",
+      "Continue this task using the relevant earlier session context."
+    ]
+  }
+}

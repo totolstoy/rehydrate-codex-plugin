@@ -1,0 +1,42 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install PyYAML
+      - run: python tests/validate.py
+      - run: sh -n plugins/rehydrate/scripts/rehydrate-on-compact.sh
+      - name: Smoke test POSIX hook
+        run: |
+          output=$(printf '%s' '{"source":"compact","session_id":"test"}' | plugins/rehydrate/scripts/rehydrate-on-compact.sh)
+          printf '%s\n' "$output" | grep -F '<rehydrate-trigger>'
+          printf '%s\n' "$output" | grep -F '"session_id":"test"'
+
+  windows-hook:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke test PowerShell hook
+        shell: pwsh
+        run: |
+          $payload = '{"source":"compact","session_id":"test"}'
+          $output = $payload | & ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
+          $joined = $output -join "`n"
+          if (-not $joined.Contains('<rehydrate-trigger>')) {
+            throw 'Missing rehydrate trigger marker'
+          }
+          if (-not $joined.Contains('"session_id":"test"')) {
+            throw 'Missing session payload'
+          }

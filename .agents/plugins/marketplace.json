@@ -1,0 +1,20 @@
+{
+  "name": "rehydrate-marketplace",
+  "interface": {
+    "displayName": "Rehydrate Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "rehydrate",
+      "source": {
+        "source": "local",
+        "path": "./plugins/rehydrate"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
