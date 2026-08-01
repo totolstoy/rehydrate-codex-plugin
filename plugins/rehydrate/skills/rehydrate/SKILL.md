@@ -1,9 +1,12 @@
 ---
 name: rehydrate
-description: Maintain continuity after Codex context compaction and across follow-up requests that depend on earlier turns. Use immediately after compaction, when a compact SessionStart hook requests recovery, when resuming a summarized session, or when the user refers to prior work with phrases such as "continue", "继续", "刚才", "这个", "按前面的", corrections, or previously agreed constraints. Selectively consult the current session transcript, preserve the latest user intent across turns, and never load the full transcript by default.
+description: Restore continuity after Codex context compaction. Use only when a compact SessionStart hook explicitly invokes $rehydrate or when the user explicitly invokes $rehydrate. Do not invoke automatically for ordinary follow-up requests before context compaction. Once active, preserve the latest user intent across turns and selectively consult the current session transcript without loading it in full by default.
 ---
 
 # Rehydrate
+
+Run only after explicit invocation. The normal automatic path is the `SessionStart(source=compact)`
+hook. Before context compaction, remain inactive unless the user explicitly invokes `$rehydrate`.
 
 Maintain an active task state containing the current goal, user intent, constraints, decisions,
 completed work and evidence, failures or rollbacks, pending work, and unresolved questions. Keep it

@@ -3,6 +3,9 @@
 Rehydrate is a local Codex plugin. Its bundled hook scripts do not send network requests, operate a
 remote service, or collect analytics.
 
+The automatic hook runs only after Codex context compaction. Before compaction, the skill remains
+inactive unless the user explicitly invokes `$rehydrate`.
+
 ## Data used
 
 After Codex compacts a task, the hook receives the `SessionStart` metadata supplied by Codex and

@@ -2,13 +2,14 @@
 
 [![Validate](https://github.com/totolstoy/rehydrate-codex-plugin/actions/workflows/validate.yml/badge.svg)](https://github.com/totolstoy/rehydrate-codex-plugin/actions/workflows/validate.yml)
 
-Rehydrate keeps Codex grounded in the active task after context compaction and during follow-up
-requests that depend on earlier turns.
+Rehydrate keeps Codex grounded in the active task after context compaction and during subsequent
+follow-up requests that depend on earlier turns.
 
 It combines a compact `SessionStart` hook with a reusable skill. The hook runs only after context
 compaction and asks Codex to rebuild its active task state. The skill then interprets each new user
 message against that state and reads only relevant transcript history when the current context is
-insufficient.
+insufficient. Before the first context compaction, the skill remains inactive unless the user
+explicitly invokes `$rehydrate`.
 
 ## Install
 
@@ -28,16 +29,22 @@ Download the ZIP attached to a GitHub release, extract it, and add the extracted
 local marketplace:
 
 ```bash
-codex plugin marketplace add /absolute/path/to/rehydrate-codex-plugin-0.1.0
+codex plugin marketplace add /absolute/path/to/rehydrate-codex-plugin-0.2.0
 codex plugin add rehydrate@rehydrate-marketplace
 ```
 
 On Windows, use the absolute extracted directory path in the first command.
 
-## Use
+## Activation behavior
 
-The plugin is designed to work automatically after context compaction and on referential follow-up
-requests such as "continue", "use the earlier constraints", or "fix what we just discussed".
+- Before context compaction, ordinary messages do not automatically invoke Rehydrate.
+- After context compaction, the `SessionStart(source=compact)` hook injects an explicit `$rehydrate`
+  request plus a direct recovery fallback.
+- Once active, Rehydrate maintains the recovered task state across subsequent messages.
+- Users can still invoke `$rehydrate` manually at any time.
+
+Referential follow-up requests such as "continue", "use the earlier constraints", or "fix what we
+just discussed" use the recovered state only after Rehydrate has been activated.
 
 You can also invoke the skill directly:
 
@@ -68,6 +75,7 @@ codex plugin marketplace remove rehydrate-marketplace
 ## Privacy and security
 
 - The bundled hook scripts do not make network requests.
+- The automatic hook runs only after Codex context compaction.
 - The hook passes Codex the `SessionStart` metadata already provided by Codex.
 - When necessary, the skill may direct Codex to read selected entries from the current local
   session transcript.

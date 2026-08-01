@@ -1,6 +1,6 @@
 interface:
   display_name: "Rehydrate Session"
-  short_description: "Keep follow-up work grounded in session history"
+  short_description: "Recover task state after context compaction"
   default_prompt: "Use $rehydrate to recover the active task state and interpret this follow-up in light of the current session history."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

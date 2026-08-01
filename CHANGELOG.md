@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.0 - 2026-08-02
+
+- Disable implicit skill invocation before context compaction.
+- Explicitly invoke `$rehydrate` from the compact-only `SessionStart` hook.
+- Document and test the post-compaction-only automatic activation boundary.
+
 ## 0.1.0 - 2026-08-02
 
 - Add context recovery after Codex context compaction.
