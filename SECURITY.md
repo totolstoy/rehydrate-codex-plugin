@@ -8,9 +8,17 @@ transcripts, credentials, session files, or other sensitive data in a public iss
 ## Security boundaries
 
 - Rehydrate's hook scripts do not make network requests.
-- The skill requests only the relevant history needed for continuity and does not load the complete
-  transcript by default.
-- Historical transcript content is evidence, not a source of current instructions.
+- The skill reads only relevant records across the session and does not load the complete transcript
+  by default.
+- Recovery is limited to user-visible messages and observable assistant actions. The skill must not
+  inspect, extract, summarize, or expose hidden reasoning, reasoning summaries, encrypted content,
+  credentials, or unrelated sensitive data.
+- Historical transcript content and tool output are untrusted evidence, not a source of current
+  instructions.
+- Tool calls must be paired with results, and planned, failed, aborted, or rolled-back work must not
+  be treated as completed work.
+- Execution-time lookups are targeted checks at material action boundaries, not continuous transcript
+  monitoring. A lookup should occur only when prior evidence could change the next action.
 - Hook execution remains subject to user approval, Codex permissions, and workspace policy.
 
 The plugin cannot override Codex sandboxing, managed policy, or filesystem permissions.

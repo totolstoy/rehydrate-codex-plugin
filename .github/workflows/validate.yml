@@ -23,7 +23,10 @@ jobs:
           output=$(printf '%s' '{"source":"compact","session_id":"test"}' | plugins/rehydrate/scripts/rehydrate-on-compact.sh)
           printf '%s\n' "$output" | grep -F '<rehydrate-trigger>'
           printf '%s\n' "$output" | grep -F '$rehydrate'
-          printf '%s\n' "$output" | grep -F 'perform the recovery directly'
+          printf '%s\n' "$output" | grep -F 'entire session'
+          printf '%s\n' "$output" | grep -F 'observable assistant actions'
+          printf '%s\n' "$output" | grep -F 'never inspect hidden reasoning'
+          printf '%s\n' "$output" | grep -F 'do not wait for another user message'
           printf '%s\n' "$output" | grep -F '"session_id":"test"'
 
   windows-hook:
@@ -42,8 +45,17 @@ jobs:
           if (-not $joined.Contains('$rehydrate')) {
             throw 'Missing explicit skill invocation'
           }
-          if (-not $joined.Contains('perform the recovery directly')) {
-            throw 'Missing direct recovery fallback'
+          if (-not $joined.Contains('entire session')) {
+            throw 'Missing session-wide recovery instruction'
+          }
+          if (-not $joined.Contains('observable assistant actions')) {
+            throw 'Missing observable-action instruction'
+          }
+          if (-not $joined.Contains('never inspect hidden reasoning')) {
+            throw 'Missing hidden-content boundary'
+          }
+          if (-not $joined.Contains('do not wait for another user message')) {
+            throw 'Missing execution-time lookup instruction'
           }
           if (-not $joined.Contains('"session_id":"test"')) {
             throw 'Missing session payload'
