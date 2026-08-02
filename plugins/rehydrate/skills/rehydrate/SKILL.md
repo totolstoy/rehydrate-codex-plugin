@@ -1,13 +1,14 @@
 ---
 name: rehydrate
-description: Recover session-wide continuity after Codex context compaction. Use only when a compact SessionStart hook explicitly invokes $rehydrate or when the user explicitly invokes $rehydrate. Do not invoke automatically before context compaction. Once active, use the native compacted summary as a baseline, selectively trace the entire current session from the user's initial relevant goal through later discussion and observable assistant actions, and autonomously recheck prior evidence during execution whenever it could change the next action. Never load the full transcript by default.
+description: Recover session-wide continuity after Codex context compaction. Use only when a compact SessionStart hook injects these instructions or when the user explicitly invokes $rehydrate:rehydrate. Do not invoke automatically before context compaction. Once active, use the native compacted summary as a baseline, selectively trace the entire current session from the user's initial relevant goal through later discussion and observable assistant actions, and autonomously recheck prior evidence during execution whenever it could change the next action. Never load the full transcript by default.
 ---
 
 # Rehydrate
 
-Run only after explicit invocation. Use Codex's native compacted summary and turns since compaction
-as the baseline, not as a complete record. Do not create a sidecar state file, duplicate the native
-summary, or inject the entire raw transcript into context.
+Run only when a compact `SessionStart` hook injects these instructions or the user explicitly invokes
+`$rehydrate:rehydrate`. Use Codex's native compacted summary and turns since compaction as the
+baseline, not as a complete record. Do not create a sidecar state file, duplicate the native summary,
+or inject the entire raw transcript into context.
 
 ## Recover continuity
 

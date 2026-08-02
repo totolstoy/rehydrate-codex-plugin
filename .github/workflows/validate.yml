@@ -20,14 +20,18 @@ jobs:
       - run: sh -n plugins/rehydrate/scripts/rehydrate-on-compact.sh
       - name: Smoke test POSIX hook
         run: |
-          output=$(printf '%s' '{"source":"compact","session_id":"test"}' | plugins/rehydrate/scripts/rehydrate-on-compact.sh)
+          plugin_root="$PWD/plugins/rehydrate"
+          output=$(printf '%s' '{"source":"compact","session_id":"test"}' | PLUGIN_ROOT="$plugin_root" plugins/rehydrate/scripts/rehydrate-on-compact.sh)
           printf '%s\n' "$output" | grep -F '<rehydrate-trigger>'
-          printf '%s\n' "$output" | grep -F '$rehydrate'
-          printf '%s\n' "$output" | grep -F 'entire session'
-          printf '%s\n' "$output" | grep -F 'observable assistant actions'
-          printf '%s\n' "$output" | grep -F 'never inspect hidden reasoning'
-          printf '%s\n' "$output" | grep -F 'do not wait for another user message'
+          printf '%s\n' "$output" | grep -F '<name>rehydrate:rehydrate</name>'
+          printf '%s\n' "$output" | grep -F '# Rehydrate'
+          printf '%s\n' "$output" | grep -F 'commentary and progress updates'
           printf '%s\n' "$output" | grep -F '"session_id":"test"'
+          ! printf '%s\n' "$output" | grep -F "$plugin_root"
+
+          fallback=$(printf '%s' '{"source":"compact","session_id":"test"}' | PLUGIN_ROOT="$PWD/missing" plugins/rehydrate/scripts/rehydrate-on-compact.sh)
+          printf '%s\n' "$fallback" | grep -F '<skill-load-fallback>'
+          printf '%s\n' "$fallback" | grep -F 'observable assistant actions'
 
   windows-hook:
     runs-on: windows-latest
@@ -37,26 +41,31 @@ jobs:
         shell: pwsh
         run: |
           $payload = '{"source":"compact","session_id":"test"}'
+          $env:PLUGIN_ROOT = (Resolve-Path ./plugins/rehydrate).Path
           $output = $payload | pwsh -NoProfile -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
           $joined = $output -join "`n"
           if (-not $joined.Contains('<rehydrate-trigger>')) {
             throw 'Missing rehydrate trigger marker'
           }
-          if (-not $joined.Contains('$rehydrate')) {
-            throw 'Missing explicit skill invocation'
+          if (-not $joined.Contains('<name>rehydrate:rehydrate</name>')) {
+            throw 'Missing runtime skill name'
           }
-          if (-not $joined.Contains('entire session')) {
-            throw 'Missing session-wide recovery instruction'
+          if (-not $joined.Contains('# Rehydrate')) {
+            throw 'Missing complete skill instructions'
           }
-          if (-not $joined.Contains('observable assistant actions')) {
-            throw 'Missing observable-action instruction'
-          }
-          if (-not $joined.Contains('never inspect hidden reasoning')) {
-            throw 'Missing hidden-content boundary'
-          }
-          if (-not $joined.Contains('do not wait for another user message')) {
-            throw 'Missing execution-time lookup instruction'
+          if ($joined.Contains($env:PLUGIN_ROOT)) {
+            throw 'Hook exposed the skill installation path'
           }
           if (-not $joined.Contains('"session_id":"test"')) {
             throw 'Missing session payload'
+          }
+
+          $env:PLUGIN_ROOT = Join-Path $PWD 'missing'
+          $fallback = $payload | pwsh -NoProfile -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
+          $fallbackJoined = $fallback -join "`n"
+          if (-not $fallbackJoined.Contains('<skill-load-fallback>')) {
+            throw 'Missing recovery fallback'
+          }
+          if (-not $fallbackJoined.Contains('observable assistant actions')) {
+            throw 'Missing fallback recovery policy'
           }

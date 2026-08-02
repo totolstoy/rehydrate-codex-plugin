@@ -9,8 +9,8 @@
             "command": "\"${PLUGIN_ROOT}/scripts/rehydrate-on-compact.sh\"",
             "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%PLUGIN_ROOT%\\scripts\\rehydrate-on-compact.ps1\"",
             "timeout": 10,
-            "statusMessage": "Recovering session-wide continuity",
-            "additionalContextLimit": 2000
+            "statusMessage": "Restoring session-wide continuity",
+            "additionalContextLimit": 4000
           }
         ]
       }

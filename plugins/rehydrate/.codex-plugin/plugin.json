@@ -1,6 +1,6 @@
 {
   "name": "rehydrate",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "Lets Codex recover and recheck session-wide continuity during execution.",
   "author": {
     "name": "totolstoy",
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Rehydrate",
     "shortDescription": "Recover and recheck context during active work.",
-    "longDescription": "Rehydrate stays inactive before context compaction, then traces relevant history from the user's initial goal through later discussion and observable assistant actions. During execution, Codex can independently recheck prior evidence whenever it could change the next action.",
+    "longDescription": "Rehydrate does not activate automatically before context compaction. After compaction, it loads its full recovery policy and traces relevant history from the user's initial goal through later discussion and observable assistant actions. During execution, Codex can independently recheck prior evidence whenever it could change the next action.",
     "developerName": "totolstoy",
     "category": "Productivity",
     "websiteURL": "https://github.com/totolstoy/rehydrate-codex-plugin",
@@ -29,7 +29,7 @@
       "Execution-time evidence checks"
     ],
     "defaultPrompt": [
-      "Use $rehydrate to trace relevant session history and recheck prior evidence during execution.",
+      "Use $rehydrate:rehydrate to trace relevant session history and recheck prior evidence during execution.",
       "Recover the session details needed to continue this task without repeating or contradicting prior work."
     ]
   }
