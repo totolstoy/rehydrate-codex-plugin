@@ -1,6 +1,6 @@
 {
   "name": "rehydrate",
-  "version": "0.3.1",
+  "version": "0.4.3",
   "description": "Lets Codex recover and recheck session-wide continuity during execution.",
   "author": {
     "name": "totolstoy",
@@ -19,18 +19,20 @@
   "interface": {
     "displayName": "Rehydrate",
     "shortDescription": "Recover and recheck context during active work.",
-    "longDescription": "Rehydrate does not activate automatically before context compaction. After compaction, it loads its full recovery policy and traces relevant history from the user's initial goal through later discussion and observable assistant actions. During execution, Codex can independently recheck prior evidence whenever it could change the next action.",
+    "longDescription": "Rehydrate activates after context compaction, builds a bounded structural history index, and expands only selected user turns, call/result pairs, and async continuations. It recovers the final meaningful pre-compaction segment and whole-session trajectory, and requires matching earlier evidence before the first retry or workaround after a material failure.",
     "developerName": "totolstoy",
     "category": "Productivity",
     "websiteURL": "https://github.com/totolstoy/rehydrate-codex-plugin",
     "privacyPolicyURL": "https://github.com/totolstoy/rehydrate-codex-plugin/blob/main/PRIVACY.md",
     "capabilities": [
       "Session-wide goal continuity",
-      "Execution-time evidence checks"
+      "Bounded structural history queries",
+      "Execution-time evidence checks",
+      "Failure-aware retry recovery"
     ],
     "defaultPrompt": [
-      "Use $rehydrate:rehydrate to trace relevant session history and recheck prior evidence during execution.",
-      "Recover the session details needed to continue this task without repeating or contradicting prior work."
+      "Use $rehydrate:rehydrate to recover context with a bounded structural index and targeted evidence expansion.",
+      "Recover the session details needed to continue without repeating or contradicting prior work."
     ]
   }
 }

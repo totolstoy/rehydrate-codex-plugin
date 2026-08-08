@@ -8,6 +8,15 @@ permissions:
   contents: read
 
 jobs:
+  python-310-query:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+      - run: python tests/test_query_session.py
+
   repository:
     runs-on: ubuntu-latest
     steps:
@@ -17,41 +26,135 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install PyYAML
       - run: python tests/validate.py
+      - run: python tests/test_query_session.py
       - run: sh -n plugins/rehydrate/scripts/rehydrate-on-compact.sh
-      - name: Smoke test POSIX hook
+      - name: Smoke test POSIX compact hook
         run: |
+          test ! -e plugins/rehydrate/scripts/rehydrate-after-tool.sh
+          test ! -e plugins/rehydrate/scripts/rehydrate-after-tool.ps1
+
           plugin_root="$PWD/plugins/rehydrate"
           output=$(printf '%s' '{"source":"compact","session_id":"test"}' | PLUGIN_ROOT="$plugin_root" plugins/rehydrate/scripts/rehydrate-on-compact.sh)
           printf '%s\n' "$output" | grep -F '<rehydrate-trigger>'
+          printf '%s\n' "$output" | grep -F '<rehydrate-runtime version="0.4.3" />'
           printf '%s\n' "$output" | grep -F '<name>rehydrate:rehydrate</name>'
           printf '%s\n' "$output" | grep -F '# Rehydrate'
-          printf '%s\n' "$output" | grep -F 'commentary and progress updates'
+          printf '%s\n' "$output" | grep -F 'complete skill body is embedded below and is already loaded'
+          printf '%s\n' "$output" | grep -F 'Do not open or resolve a cached SKILL.md locator'
+          printf '%s\n' "$output" | grep -F 'final meaningful work segment'
+          printf '%s\n' "$output" | grep -F 'latest top-level `compacted` record'
+          printf '%s\n' "$output" | grep -F 'immediate tail stand in for the whole task'
+          printf '%s\n' "$output" | grep -F 'Before the first retry or workaround'
+          printf '%s\n' "$output" | grep -F 'most recent verified success'
+          printf '%s\n' "$output" | grep -F 'progressive query ladder'
+          printf '%s\n' "$output" | grep -F 'scripts/query_session.py'
+          printf '%s\n' "$output" | grep -F 'positional subcommands'
+          printf '%s\n' "$output" | grep -F 'Values above a cap are capped'
+          printf '%s\n' "$output" | grep -F 'fixed record count or time window'
           printf '%s\n' "$output" | grep -F '"session_id":"test"'
+          ! printf '%s\n' "$output" | grep -F 'PostToolUse'
           ! printf '%s\n' "$output" | grep -F "$plugin_root"
 
           fallback=$(printf '%s' '{"source":"compact","session_id":"test"}' | PLUGIN_ROOT="$PWD/missing" plugins/rehydrate/scripts/rehydrate-on-compact.sh)
           printf '%s\n' "$fallback" | grep -F '<skill-load-fallback>'
+          printf '%s\n' "$fallback" | grep -F 'final meaningful pre-compaction work segment'
+          printf '%s\n' "$fallback" | grep -F 'latest top-level compacted record'
+          printf '%s\n' "$fallback" | grep -F 'tail supplements rather than replaces whole-session recovery'
           printf '%s\n' "$fallback" | grep -F 'observable assistant actions'
+          printf '%s\n' "$fallback" | grep -F 'before the first retry or workaround'
+          printf '%s\n' "$fallback" | grep -F 'most recent verified success'
+          printf '%s\n' "$fallback" | grep -F 'expected, accepted branch'
+          printf '%s\n' "$fallback" | grep -F 'predefined interpretation and next step'
+          printf '%s\n' "$fallback" | grep -F 'same operation, target, and error-signature key'
+          printf '%s\n' "$fallback" | grep -F 'Do not rescan the same key'
+          printf '%s\n' "$fallback" | grep -F 'bounded structural index'
+          printf '%s\n' "$fallback" | grep -F 'never *_session.py filenames'
+          printf '%s\n' "$fallback" | grep -F 'Values above caps are capped'
+          printf '%s\n' "$fallback" | grep -F 'fixed page size is only a transport boundary'
+          printf '%s\n' "$fallback" | grep -F 'cell_id/session_id'
+          ! printf '%s\n' "$fallback" | grep -F 'already loaded'
+
+          whitespace_root=$(mktemp -d)
+          mkdir -p "$whitespace_root/skills/rehydrate"
+          printf ' \t\n' > "$whitespace_root/skills/rehydrate/SKILL.md"
+          whitespace=$(printf '%s' '{"source":"compact","session_id":"test"}' | PLUGIN_ROOT="$whitespace_root" plugins/rehydrate/scripts/rehydrate-on-compact.sh)
+          printf '%s\n' "$whitespace" | grep -F '<skill-load-fallback>'
+          printf '%s\n' "$whitespace" | grep -F 'final meaningful pre-compaction work segment'
+          ! printf '%s\n' "$whitespace" | grep -Fx '<skill>'
+          ! printf '%s\n' "$whitespace" | grep -F 'already loaded'
 
   windows-hook:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Smoke test PowerShell hook
-        shell: pwsh
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python tests/test_query_session.py
+      - name: Smoke test PowerShell compact hook
+        shell: powershell
         run: |
+          if (Test-Path ./plugins/rehydrate/scripts/rehydrate-after-tool.ps1) {
+            throw 'Removed PowerShell PostToolUse handler is still present'
+          }
+          if (Test-Path ./plugins/rehydrate/scripts/rehydrate-after-tool.sh) {
+            throw 'Removed POSIX PostToolUse handler is still present'
+          }
+
           $payload = '{"source":"compact","session_id":"test"}'
           $env:PLUGIN_ROOT = (Resolve-Path ./plugins/rehydrate).Path
-          $output = $payload | pwsh -NoProfile -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
+          $output = $payload | powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
           $joined = $output -join "`n"
           if (-not $joined.Contains('<rehydrate-trigger>')) {
             throw 'Missing rehydrate trigger marker'
+          }
+          if (-not $joined.Contains('<rehydrate-runtime version="0.4.3" />')) {
+            throw 'Missing diagnostic Rehydrate runtime marker'
           }
           if (-not $joined.Contains('<name>rehydrate:rehydrate</name>')) {
             throw 'Missing runtime skill name'
           }
           if (-not $joined.Contains('# Rehydrate')) {
             throw 'Missing complete skill instructions'
+          }
+          if (-not $joined.Contains('complete skill body is embedded below and is already loaded')) {
+            throw 'Missing embedded-skill load boundary'
+          }
+          if (-not $joined.Contains('Do not open or resolve a cached SKILL.md locator')) {
+            throw 'Missing stale skill-locator guard'
+          }
+          if (-not $joined.Contains('final meaningful work segment')) {
+            throw 'Missing final pre-compaction segment contract'
+          }
+          if (-not $joined.Contains('latest top-level `compacted` record')) {
+            throw 'Missing compact boundary contract'
+          }
+          if (-not $joined.Contains('immediate tail stand in for the whole task')) {
+            throw 'Tail replaced whole-session recovery'
+          }
+          if (-not $joined.Contains('Before the first retry or workaround')) {
+            throw 'Missing first-failure recovery checkpoint'
+          }
+          if (-not $joined.Contains('most recent verified success')) {
+            throw 'Missing verified recovery endpoint'
+          }
+          if (-not $joined.Contains('progressive query ladder')) {
+            throw 'Missing progressive query contract'
+          }
+          if (-not $joined.Contains('scripts/query_session.py')) {
+            throw 'Missing bundled query-helper contract'
+          }
+          if (-not $joined.Contains('positional subcommands')) {
+            throw 'Missing single-launcher subcommand contract'
+          }
+          if (-not $joined.Contains('Values above a cap are capped')) {
+            throw 'Missing output-control capping contract'
+          }
+          if (-not $joined.Contains('fixed record count or time window')) {
+            throw 'Page size became a semantic stopping rule'
+          }
+          if ($joined.Contains('PostToolUse')) {
+            throw 'Removed PostToolUse contract was injected'
           }
           if ($joined.Contains($env:PLUGIN_ROOT)) {
             throw 'Hook exposed the skill installation path'
@@ -61,11 +164,73 @@ jobs:
           }
 
           $env:PLUGIN_ROOT = Join-Path $PWD 'missing'
-          $fallback = $payload | pwsh -NoProfile -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
+          $fallback = $payload | powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
           $fallbackJoined = $fallback -join "`n"
           if (-not $fallbackJoined.Contains('<skill-load-fallback>')) {
             throw 'Missing recovery fallback'
           }
+          if (-not $fallbackJoined.Contains('final meaningful pre-compaction work segment')) {
+            throw 'Missing fallback tail recovery'
+          }
+          if (-not $fallbackJoined.Contains('latest top-level compacted record')) {
+            throw 'Missing fallback compact boundary'
+          }
+          if (-not $fallbackJoined.Contains('tail supplements rather than replaces whole-session recovery')) {
+            throw 'Fallback tail replaced whole-session recovery'
+          }
           if (-not $fallbackJoined.Contains('observable assistant actions')) {
             throw 'Missing fallback recovery policy'
+          }
+          if (-not $fallbackJoined.Contains('before the first retry or workaround')) {
+            throw 'Missing fallback first-failure checkpoint'
+          }
+          if (-not $fallbackJoined.Contains('most recent verified success')) {
+            throw 'Missing fallback verified recovery endpoint'
+          }
+          if (-not $fallbackJoined.Contains('expected, accepted branch')) {
+            throw 'Fallback broadened the negative-probe exception'
+          }
+          if (-not $fallbackJoined.Contains('predefined interpretation and next step')) {
+            throw 'Fallback omitted the probe interpretation requirement'
+          }
+          if (-not $fallbackJoined.Contains('same operation, target, and error-signature key')) {
+            throw 'Fallback omitted the lookup reuse key'
+          }
+          if (-not $fallbackJoined.Contains('Do not rescan the same key')) {
+            throw 'Fallback omitted the no-rescan rule'
+          }
+          if (-not $fallbackJoined.Contains('bounded structural index')) {
+            throw 'Fallback omitted bounded candidate indexing'
+          }
+          if (-not $fallbackJoined.Contains('never *_session.py filenames')) {
+            throw 'Fallback omitted single-launcher subcommand contract'
+          }
+          if (-not $fallbackJoined.Contains('Values above caps are capped')) {
+            throw 'Fallback omitted output-control capping contract'
+          }
+          if (-not $fallbackJoined.Contains('fixed page size is only a transport boundary')) {
+            throw 'Fallback made page size a semantic boundary'
+          }
+          if (-not $fallbackJoined.Contains('cell_id/session_id')) {
+            throw 'Fallback omitted async continuation correlation'
+          }
+          if ($fallbackJoined.Contains('already loaded')) {
+            throw 'Fallback falsely claimed that the complete skill was loaded'
+          }
+
+          $whitespaceRoot = Join-Path $env:RUNNER_TEMP "rehydrate-whitespace-$([guid]::NewGuid())"
+          $whitespaceSkill = Join-Path $whitespaceRoot 'skills/rehydrate/SKILL.md'
+          New-Item -ItemType Directory -Path (Split-Path -Parent $whitespaceSkill) -Force | Out-Null
+          [System.IO.File]::WriteAllText($whitespaceSkill, " `t`r`n")
+          $env:PLUGIN_ROOT = $whitespaceRoot
+          $whitespace = $payload | powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./plugins/rehydrate/scripts/rehydrate-on-compact.ps1
+          $whitespaceJoined = $whitespace -join "`n"
+          if (-not $whitespaceJoined.Contains('<skill-load-fallback>')) {
+            throw 'Whitespace-only skill did not use fallback'
+          }
+          if (-not $whitespaceJoined.Contains('final meaningful pre-compaction work segment')) {
+            throw 'Whitespace fallback omitted tail recovery'
+          }
+          if ($whitespaceJoined.Contains('<skill>') -or $whitespaceJoined.Contains('already loaded')) {
+            throw 'Whitespace-only skill was treated as loaded'
           }
