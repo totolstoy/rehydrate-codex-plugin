@@ -193,6 +193,7 @@ class QuerySessionTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(QUERY), *args, "--transcript", str(transcript)],
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=True,
             env=env,
